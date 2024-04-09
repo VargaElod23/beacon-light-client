@@ -68,7 +68,7 @@
 //
 // Inspired: https://github.com/ethereum/annotated-spec/blob/master/altair/sync-protocol.md
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./bls12381/BLS.sol";
 import "./util/Bitfield.sol";
@@ -104,8 +104,14 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     bytes4 private constant DOMAIN_SYNC_COMMITTEE = 0x07000000;
 
     event FinalizedHeaderImported(BeaconBlockHeader finalized_header);
-    event NextSyncCommitteeImported(uint64 indexed period, bytes32 indexed sync_committee_root);
-    event FinalizedExecutionPayloadHeaderImported(uint256 block_number, bytes32 state_root);
+    event NextSyncCommitteeImported(
+        uint64 indexed period,
+        bytes32 indexed sync_committee_root
+    );
+    event FinalizedExecutionPayloadHeaderImported(
+        uint256 block_number,
+        bytes32 state_root
+    );
 
     constructor(
         uint64 _slot,
@@ -118,10 +124,18 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         bytes32 _current_sync_committee_hash,
         bytes32 _genesis_validators_root
     ) {
-        finalized_header = BeaconBlockHeader(_slot, _proposer_index, _parent_root, _state_root, _body_root);
+        finalized_header = BeaconBlockHeader(
+            _slot,
+            _proposer_index,
+            _parent_root,
+            _state_root,
+            _body_root
+        );
         finalized_execution_payload_header_block_number = _block_number;
         finalized_execution_payload_header_state_root = _merkle_root;
-        sync_committee_roots[compute_sync_committee_period(_slot)] = _current_sync_committee_hash;
+        sync_committee_roots[
+            compute_sync_committee_period(_slot)
+        ] = _current_sync_committee_hash;
         GENESIS_VALIDATORS_ROOT = _genesis_validators_root;
     }
 
@@ -147,26 +161,43 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     function import_next_sync_committee(
         FinalizedHeaderUpdate calldata header_update,
         SyncCommitteePeriodUpdate calldata sc_update
-    )
-        external
-    {
-        require(is_supermajority(header_update.sync_aggregate.sync_committee_bits), "!supermajor");
+    ) external {
         require(
-            header_update.signature_slot > header_update.attested_header.beacon.slot
-                && header_update.attested_header.beacon.slot >= header_update.finalized_header.beacon.slot,
+            is_supermajority(header_update.sync_aggregate.sync_committee_bits),
+            "!supermajor"
+        );
+        require(
+            header_update.signature_slot >
+                header_update.attested_header.beacon.slot &&
+                header_update.attested_header.beacon.slot >=
+                header_update.finalized_header.beacon.slot,
             "!skip"
         );
         verify_light_client_header(header_update);
 
-        uint64 attested_period = compute_sync_committee_period(header_update.attested_header.beacon.slot);
-        uint64 finalized_period = compute_sync_committee_period(header_update.finalized_header.beacon.slot);
-        uint64 signature_period = compute_sync_committee_period(header_update.signature_slot);
-        require(signature_period == finalized_period && finalized_period == attested_period, "!period");
+        uint64 attested_period = compute_sync_committee_period(
+            header_update.attested_header.beacon.slot
+        );
+        uint64 finalized_period = compute_sync_committee_period(
+            header_update.finalized_header.beacon.slot
+        );
+        uint64 signature_period = compute_sync_committee_period(
+            header_update.signature_slot
+        );
+        require(
+            signature_period == finalized_period &&
+                finalized_period == attested_period,
+            "!period"
+        );
 
-        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
+        bytes32 singature_sync_committee_root = sync_committee_roots[
+            signature_period
+        ];
         require(singature_sync_committee_root != bytes32(0), "!missing");
         require(
-            singature_sync_committee_root == hash_tree_root(header_update.signature_sync_committee), "!sync_committee"
+            singature_sync_committee_root ==
+                hash_tree_root(header_update.signature_sync_committee),
+            "!sync_committee"
         );
 
         require(
@@ -179,11 +210,15 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             "!sign"
         );
 
-        if (header_update.finalized_header.beacon.slot > finalized_header.slot) {
+        if (
+            header_update.finalized_header.beacon.slot > finalized_header.slot
+        ) {
             apply_light_client_update(header_update);
         }
 
-        bytes32 next_sync_committee_root = hash_tree_root(sc_update.next_sync_committee);
+        bytes32 next_sync_committee_root = hash_tree_root(
+            sc_update.next_sync_committee
+        );
         require(
             verify_next_sync_committee(
                 next_sync_committee_root,
@@ -200,22 +235,42 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
     }
 
     /// @dev follow beacon api: /eth/v1/beacon/light_client/finality_update/
-    function import_finalized_header(FinalizedHeaderUpdate calldata update) external {
-        require(is_supermajority(update.sync_aggregate.sync_committee_bits), "!supermajor");
+    function import_finalized_header(
+        FinalizedHeaderUpdate calldata update
+    ) external {
         require(
-            update.signature_slot > update.attested_header.beacon.slot
-                && update.attested_header.beacon.slot >= update.finalized_header.beacon.slot,
+            is_supermajority(update.sync_aggregate.sync_committee_bits),
+            "!supermajor"
+        );
+        require(
+            update.signature_slot > update.attested_header.beacon.slot &&
+                update.attested_header.beacon.slot >=
+                update.finalized_header.beacon.slot,
             "!skip"
         );
         verify_light_client_header(update);
 
-        uint64 finalized_period = compute_sync_committee_period(finalized_header.slot);
-        uint64 signature_period = compute_sync_committee_period(update.signature_slot);
-        require(signature_period == finalized_period || signature_period == finalized_period + 1, "!signature_period");
-        bytes32 singature_sync_committee_root = sync_committee_roots[signature_period];
+        uint64 finalized_period = compute_sync_committee_period(
+            finalized_header.slot
+        );
+        uint64 signature_period = compute_sync_committee_period(
+            update.signature_slot
+        );
+        require(
+            signature_period == finalized_period ||
+                signature_period == finalized_period + 1,
+            "!signature_period"
+        );
+        bytes32 singature_sync_committee_root = sync_committee_roots[
+            signature_period
+        ];
 
         require(singature_sync_committee_root != bytes32(0), "!missing");
-        require(singature_sync_committee_root == hash_tree_root(update.signature_sync_committee), "!sync_committee");
+        require(
+            singature_sync_committee_root ==
+                hash_tree_root(update.signature_sync_committee),
+            "!sync_committee"
+        );
 
         require(
             verify_signed_header(
@@ -227,7 +282,10 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
             "!sign"
         );
 
-        require(update.finalized_header.beacon.slot > finalized_header.slot, "!new");
+        require(
+            update.finalized_header.beacon.slot > finalized_header.slot,
+            "!new"
+        );
         apply_light_client_update(update);
     }
 
@@ -236,11 +294,7 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         SyncCommittee calldata sync_committee,
         bytes4 fork_version,
         BeaconBlockHeader calldata header
-    )
-        internal
-        view
-        returns (bool)
-    {
+    ) internal view returns (bool) {
         // Verify sync committee aggregate signature
         uint256 participants = sum(sync_aggregate.sync_committee_bits);
         bytes[] memory participant_pubkeys = new bytes[](participants);
@@ -248,36 +302,59 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         unchecked {
             for (uint64 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
                 uint256 index = i >> 8;
-                uint256 sindex = i / 8 % 32;
+                uint256 sindex = (i / 8) % 32;
                 uint256 offset = i % 8;
-                if (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >> offset & 1 == 1) {
+                if (
+                    (uint8(sync_aggregate.sync_committee_bits[index][sindex]) >>
+                        offset) &
+                        1 ==
+                    1
+                ) {
                     participant_pubkeys[n++] = sync_committee.pubkeys[i];
                 }
             }
         }
 
-        bytes32 domain = compute_domain(DOMAIN_SYNC_COMMITTEE, fork_version, GENESIS_VALIDATORS_ROOT);
+        bytes32 domain = compute_domain(
+            DOMAIN_SYNC_COMMITTEE,
+            fork_version,
+            GENESIS_VALIDATORS_ROOT
+        );
         bytes32 signing_root = compute_signing_root(header, domain);
         bytes memory message = abi.encodePacked(signing_root);
         bytes memory signature = sync_aggregate.sync_committee_signature;
         require(signature.length == BLSSIGNATURE_LENGTH, "!signature");
-        return BLS.fast_aggregate_verify(participant_pubkeys, message, signature);
+        return
+            BLS.fast_aggregate_verify(participant_pubkeys, message, signature);
     }
 
-    function apply_light_client_update(FinalizedHeaderUpdate calldata update) internal {
+    function apply_light_client_update(
+        FinalizedHeaderUpdate calldata update
+    ) internal {
         finalized_header = update.finalized_header.beacon;
-        finalized_execution_payload_header_block_number = update.finalized_header.execution.block_number;
-        finalized_execution_payload_header_state_root = update.finalized_header.execution.state_root;
+        finalized_execution_payload_header_block_number = update
+            .finalized_header
+            .execution
+            .block_number;
+        finalized_execution_payload_header_state_root = update
+            .finalized_header
+            .execution
+            .state_root;
         emit FinalizedHeaderImported(update.finalized_header.beacon);
         emit FinalizedExecutionPayloadHeaderImported(
-            update.finalized_header.execution.block_number, update.finalized_header.execution.state_root
+            update.finalized_header.execution.block_number,
+            update.finalized_header.execution.state_root
         );
     }
 
-    function verify_light_client_header(FinalizedHeaderUpdate calldata update) internal pure {
+    function verify_light_client_header(
+        FinalizedHeaderUpdate calldata update
+    ) internal pure {
         require(
             verify_finalized_header(
-                update.finalized_header.beacon, update.finality_branch, update.attested_header.beacon.state_root
+                update.finalized_header.beacon,
+                update.finality_branch,
+                update.attested_header.beacon.state_root
             ),
             "!finalized_header"
         );
@@ -303,64 +380,68 @@ contract BeaconLightClient is BeaconLightClientUpdate, Bitfield {
         BeaconBlockHeader calldata header,
         bytes32[] calldata finality_branch,
         bytes32 attested_header_state_root
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        require(finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH, "!finality_branch");
-        return is_valid_merkle_branch(
-            hash_tree_root(header),
-            finality_branch,
-            FINALIZED_CHECKPOINT_ROOT_DEPTH,
-            FINALIZED_CHECKPOINT_ROOT_INDEX,
-            attested_header_state_root
+    ) internal pure returns (bool) {
+        require(
+            finality_branch.length == FINALIZED_CHECKPOINT_ROOT_DEPTH,
+            "!finality_branch"
         );
+        return
+            is_valid_merkle_branch(
+                hash_tree_root(header),
+                finality_branch,
+                FINALIZED_CHECKPOINT_ROOT_DEPTH,
+                FINALIZED_CHECKPOINT_ROOT_INDEX,
+                attested_header_state_root
+            );
     }
 
     function verify_execution_payload(
         ExecutionPayloadHeader calldata header,
         bytes32[] calldata execution_branch,
         bytes32 beacon_header_body_root
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        require(execution_branch.length == EXECUTION_PAYLOAD_DEPTH, "!execution_branch");
-        return is_valid_merkle_branch(
-            hash_tree_root(header),
-            execution_branch,
-            EXECUTION_PAYLOAD_DEPTH,
-            EXECUTION_PAYLOAD_INDEX,
-            beacon_header_body_root
+    ) internal pure returns (bool) {
+        require(
+            execution_branch.length == EXECUTION_PAYLOAD_DEPTH,
+            "!execution_branch"
         );
+        return
+            is_valid_merkle_branch(
+                hash_tree_root(header),
+                execution_branch,
+                EXECUTION_PAYLOAD_DEPTH,
+                EXECUTION_PAYLOAD_INDEX,
+                beacon_header_body_root
+            );
     }
 
     function verify_next_sync_committee(
         bytes32 next_sync_committee_root,
         bytes32[] calldata next_sync_committee_branch,
         bytes32 header_state_root
-    )
-        internal
-        pure
-        returns (bool)
-    {
-        require(next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH, "!next_sync_committee_branch");
-        return is_valid_merkle_branch(
-            next_sync_committee_root,
-            next_sync_committee_branch,
-            NEXT_SYNC_COMMITTEE_DEPTH,
-            NEXT_SYNC_COMMITTEE_INDEX,
-            header_state_root
+    ) internal pure returns (bool) {
+        require(
+            next_sync_committee_branch.length == NEXT_SYNC_COMMITTEE_DEPTH,
+            "!next_sync_committee_branch"
         );
+        return
+            is_valid_merkle_branch(
+                next_sync_committee_root,
+                next_sync_committee_branch,
+                NEXT_SYNC_COMMITTEE_DEPTH,
+                NEXT_SYNC_COMMITTEE_INDEX,
+                header_state_root
+            );
     }
 
-    function is_supermajority(bytes32[2] calldata sync_committee_bits) internal pure returns (bool) {
+    function is_supermajority(
+        bytes32[2] calldata sync_committee_bits
+    ) internal pure returns (bool) {
         return sum(sync_committee_bits) * 3 >= SYNC_COMMITTEE_SIZE * 2;
     }
 
-    function compute_sync_committee_period(uint64 slot_) internal pure returns (uint64) {
+    function compute_sync_committee_period(
+        uint64 slot_
+    ) internal pure returns (uint64) {
         return slot_ / SLOTS_PER_EPOCH / EPOCHS_PER_SYNC_COMMITTEE_PERIOD;
     }
 

@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./ssz/MerkleProof.sol";
 import "./util/ScaleCodec.sol";
@@ -117,12 +117,14 @@ contract BeaconChain is MerkleProof {
     function compute_signing_root(
         BeaconBlockHeader memory beacon_header,
         bytes32 domain
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return hash_tree_root(SigningData({ object_root: hash_tree_root(beacon_header), domain: domain }));
+    ) internal pure returns (bytes32) {
+        return
+            hash_tree_root(
+                SigningData({
+                    object_root: hash_tree_root(beacon_header),
+                    domain: domain
+                })
+            );
     }
 
     /// @notice Return the 32-byte fork data root for the ``current_version`` and ``genesis_validators_root``.
@@ -130,14 +132,14 @@ contract BeaconChain is MerkleProof {
     function compute_fork_data_root(
         bytes4 current_version,
         bytes32 genesis_validators_root
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        return hash_tree_root(
-            ForkData({ current_version: current_version, genesis_validators_root: genesis_validators_root })
-        );
+    ) internal pure returns (bytes32) {
+        return
+            hash_tree_root(
+                ForkData({
+                    current_version: current_version,
+                    genesis_validators_root: genesis_validators_root
+                })
+            );
     }
 
     /// @notice Return the domain for the ``domain_type`` and ``fork_version``.
@@ -145,27 +147,36 @@ contract BeaconChain is MerkleProof {
         bytes4 domain_type,
         bytes4 fork_version,
         bytes32 genesis_validators_root
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        bytes32 fork_data_root = compute_fork_data_root(fork_version, genesis_validators_root);
-        return bytes32(domain_type) | fork_data_root >> 32;
+    ) internal pure returns (bytes32) {
+        bytes32 fork_data_root = compute_fork_data_root(
+            fork_version,
+            genesis_validators_root
+        );
+        return bytes32(domain_type) | (fork_data_root >> 32);
     }
 
     /// @notice Return hash tree root of fork data
-    function hash_tree_root(ForkData memory fork_data) internal pure returns (bytes32) {
-        return hash_node(bytes32(fork_data.current_version), fork_data.genesis_validators_root);
+    function hash_tree_root(
+        ForkData memory fork_data
+    ) internal pure returns (bytes32) {
+        return
+            hash_node(
+                bytes32(fork_data.current_version),
+                fork_data.genesis_validators_root
+            );
     }
 
     /// @notice Return hash tree root of signing data
-    function hash_tree_root(SigningData memory signing_data) internal pure returns (bytes32) {
+    function hash_tree_root(
+        SigningData memory signing_data
+    ) internal pure returns (bytes32) {
         return hash_node(signing_data.object_root, signing_data.domain);
     }
 
     /// @notice Return hash tree root of sync committee
-    function hash_tree_root(SyncCommittee memory sync_committee) internal pure returns (bytes32) {
+    function hash_tree_root(
+        SyncCommittee memory sync_committee
+    ) internal pure returns (bytes32) {
         bytes32[] memory pubkeys_leaves = new bytes32[](SYNC_COMMITTEE_SIZE);
         for (uint256 i = 0; i < SYNC_COMMITTEE_SIZE; ++i) {
             bytes memory key = BLS.to_compressed_g1(sync_committee.pubkeys[i]);
@@ -174,14 +185,21 @@ contract BeaconChain is MerkleProof {
         }
         bytes32 pubkeys_root = merkle_root(pubkeys_leaves);
 
-        require(sync_committee.aggregate_pubkey.length == BLSPUBLICKEY_LENGTH, "!agg_key");
-        bytes32 aggregate_pubkey_root = hash(abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0)));
+        require(
+            sync_committee.aggregate_pubkey.length == BLSPUBLICKEY_LENGTH,
+            "!agg_key"
+        );
+        bytes32 aggregate_pubkey_root = hash(
+            abi.encodePacked(sync_committee.aggregate_pubkey, bytes16(0))
+        );
 
         return hash_node(pubkeys_root, aggregate_pubkey_root);
     }
 
     /// @notice Return hash tree root of beacon block header
-    function hash_tree_root(BeaconBlockHeader memory beacon_header) internal pure returns (bytes32) {
+    function hash_tree_root(
+        BeaconBlockHeader memory beacon_header
+    ) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](5);
         leaves[0] = bytes32(to_little_endian_64(beacon_header.slot));
         leaves[1] = bytes32(to_little_endian_64(beacon_header.proposer_index));
@@ -192,7 +210,9 @@ contract BeaconChain is MerkleProof {
     }
 
     /// @notice Return hash tree root of execution payload in Capella
-    function hash_tree_root(ExecutionPayloadHeader memory execution_payload) internal pure returns (bytes32) {
+    function hash_tree_root(
+        ExecutionPayloadHeader memory execution_payload
+    ) internal pure returns (bytes32) {
         bytes32[] memory leaves = new bytes32[](15);
         leaves[0] = execution_payload.parent_hash;
         leaves[1] = bytes32(bytes20(execution_payload.fee_recipient));
@@ -200,7 +220,9 @@ contract BeaconChain is MerkleProof {
         leaves[3] = execution_payload.receipts_root;
         leaves[4] = execution_payload.logs_bloom;
         leaves[5] = execution_payload.prev_randao;
-        leaves[6] = bytes32(to_little_endian_64(execution_payload.block_number));
+        leaves[6] = bytes32(
+            to_little_endian_64(execution_payload.block_number)
+        );
         leaves[7] = bytes32(to_little_endian_64(execution_payload.gas_limit));
         leaves[8] = bytes32(to_little_endian_64(execution_payload.gas_used));
         leaves[9] = bytes32(to_little_endian_64(execution_payload.timestamp));
@@ -218,7 +240,9 @@ contract BeaconChain is MerkleProof {
     }
 
     /// @notice Return little endian of uint256
-    function to_little_endian_256(uint256 value) internal pure returns (bytes32) {
+    function to_little_endian_256(
+        uint256 value
+    ) internal pure returns (bytes32) {
         return ScaleCodec.encode256(value);
     }
 }

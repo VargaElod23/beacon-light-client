@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./Fp.sol";
 import "../util/Bytes.sol";
@@ -28,14 +28,17 @@ library BLS12G1Affine {
     /// @dev Negative G1 generator
     /// @return Negative G1 generator
     function neg_generator() internal pure returns (Bls12G1 memory) {
-        return Bls12G1({
-            x: Bls12Fp(
-                0x17f1d3a73197d7942695638c4fa9ac0f, 0xc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb
+        return
+            Bls12G1({
+                x: Bls12Fp(
+                    0x17f1d3a73197d7942695638c4fa9ac0f,
+                    0xc3688c4f9774b905a14e3a3f171bac586c55e83ff97a1aeffb3af00adb22c6bb
                 ),
-            y: Bls12Fp(
-                0x114d1d6855d545a8aa7d76c8cf2e21f2, 0x67816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca
+                y: Bls12Fp(
+                    0x114d1d6855d545a8aa7d76c8cf2e21f2,
+                    0x67816aef1db507c96655b9d5caac42364e6f38ba0ecb751bad54dcd6b939c2ca
                 )
-        });
+            });
     }
 
     /// @dev Returns the additive identity element of Bls12G1.
@@ -61,14 +64,17 @@ library BLS12G1Affine {
     /// @dev Returns complement in G1 for `apk-proofs`.
     /// @return Complement in G1.
     function complement() internal pure returns (Bls12G1 memory) {
-        return Bls12G1({ x: Bls12Fp(0, 0), y: Bls12Fp(0, 1) });
+        return Bls12G1({x: Bls12Fp(0, 0), y: Bls12Fp(0, 1)});
     }
 
     /// @dev Returns the result of `p + q`.
     /// @param p Bls12G1.
     /// @param q Bls12G1.
     /// @return z `x + y`.
-    function add(Bls12G1 memory p, Bls12G1 memory q) internal view returns (Bls12G1 memory) {
+    function add(
+        Bls12G1 memory p,
+        Bls12G1 memory q
+    ) internal view returns (Bls12G1 memory) {
         uint256[8] memory input;
         input[0] = p.x.a;
         input[1] = p.x.b;
@@ -99,7 +105,9 @@ library BLS12G1Affine {
     }
 
     // Take a 96 byte array and convert to a G1 point (x, y)
-    function deserialize(bytes memory g1) internal pure returns (Bls12G1 memory) {
+    function deserialize(
+        bytes memory g1
+    ) internal pure returns (Bls12G1 memory) {
         require(g1.length == 96, "!g1");
         bytes1 byt = g1[0];
         bool c_flag = (byt >> 7) & 0x01 == 0x01;
@@ -113,8 +121,14 @@ library BLS12G1Affine {
 
         // Zero flags
         g1[0] = byt & 0x1f;
-        Bls12Fp memory x = Bls12Fp(g1.slice_to_uint(0, 16), g1.slice_to_uint(16, 48));
-        Bls12Fp memory y = Bls12Fp(g1.slice_to_uint(48, 64), g1.slice_to_uint(64, 96));
+        Bls12Fp memory x = Bls12Fp(
+            g1.slice_to_uint(0, 16),
+            g1.slice_to_uint(16, 48)
+        );
+        Bls12Fp memory y = Bls12Fp(
+            g1.slice_to_uint(48, 64),
+            g1.slice_to_uint(64, 96)
+        );
 
         // Require elements less than field modulus
         require(x.is_valid() && y.is_valid(), "!pnt");
@@ -126,7 +140,9 @@ library BLS12G1Affine {
     }
 
     // Take a G1 point (x, y) and compress it to a 48 byte array.
-    function serialize(Bls12G1 memory g1) internal pure returns (bytes memory r) {
+    function serialize(
+        Bls12G1 memory g1
+    ) internal pure returns (bytes memory r) {
         if (is_infinity(g1)) {
             r = new bytes(48);
             r[0] = bytes1(0xc0);

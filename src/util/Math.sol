@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 library Math {
     /// Get the power of 2 for given input, or the closest higher power of 2 if the input is not a power of 2.
@@ -29,7 +29,11 @@ library Math {
 
     /// @dev Add with carry
     /// (carry, d) = a + b + carry.
-    function adc(uint256 a, uint256 b, uint8 carry) internal pure returns (uint8, uint256) {
+    function adc(
+        uint256 a,
+        uint256 b,
+        uint8 carry
+    ) internal pure returns (uint8, uint256) {
         unchecked {
             uint256 c = a + b;
             uint256 d = c + uint256(carry);
@@ -40,7 +44,11 @@ library Math {
 
     /// @dev Sub with borrow
     /// (borrow, d) = a - b - borrow.
-    function sbb(uint256 a, uint256 b, uint8 borrow) internal pure returns (uint8, uint256) {
+    function sbb(
+        uint256 a,
+        uint256 b,
+        uint8 borrow
+    ) internal pure returns (uint8, uint256) {
         unchecked {
             uint256 c = a - uint256(borrow);
             if (b > c) return (1, (c - b));

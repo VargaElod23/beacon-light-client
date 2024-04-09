@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "../util/Math.sol";
 import "../util/ScaleCodec.sol";
@@ -23,9 +23,11 @@ library BLS12FP {
     /// 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
     /// @return Base field.
     function q() internal pure returns (Bls12Fp memory) {
-        return Bls12Fp(
-            0x1a0111ea397fe69a4b1ba7b6434bacd7, 0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-        );
+        return
+            Bls12Fp(
+                0x1a0111ea397fe69a4b1ba7b6434bacd7,
+                0x64774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
+            );
     }
 
     function b() internal pure returns (Bls12Fp memory) {
@@ -34,9 +36,11 @@ library BLS12FP {
 
     /// @dev (q+1)/4
     function qr() internal pure returns (Bls12Fp memory) {
-        return Bls12Fp(
-            0x680447a8e5ff9a692c6e9ed90d2eb35, 0xd91dd2e13ce144afd9cc34a83dac3d8907aaffffac54ffffee7fbfffffffeaab
-        );
+        return
+            Bls12Fp(
+                0x680447a8e5ff9a692c6e9ed90d2eb35,
+                0xd91dd2e13ce144afd9cc34a83dac3d8907aaffffac54ffffee7fbfffffffeaab
+            );
     }
 
     /// @dev Returns the additive identity element of Bls12Fp.
@@ -67,7 +71,10 @@ library BLS12FP {
     /// @param x Bls12Fp.
     /// @param y Bls12Fp.
     /// @return Result of equal check.
-    function eq(Bls12Fp memory x, Bls12Fp memory y) internal pure returns (bool) {
+    function eq(
+        Bls12Fp memory x,
+        Bls12Fp memory y
+    ) internal pure returns (bool) {
         return (x.a == y.a && x.b == y.b);
     }
 
@@ -75,7 +82,10 @@ library BLS12FP {
     /// @param x Bls12Fp.
     /// @param y Bls12Fp.
     /// @return Result of gt check.
-    function gt(Bls12Fp memory x, Bls12Fp memory y) internal pure returns (bool) {
+    function gt(
+        Bls12Fp memory x,
+        Bls12Fp memory y
+    ) internal pure returns (bool) {
         return (x.a > y.a || (x.a == y.a && x.b > y.b));
     }
 
@@ -93,7 +103,10 @@ library BLS12FP {
     /// @param x Bls12Fp.
     /// @param y Bls12Fp.
     /// @return z `x + y`.
-    function add_nomod(Bls12Fp memory x, Bls12Fp memory y) internal pure returns (Bls12Fp memory z) {
+    function add_nomod(
+        Bls12Fp memory x,
+        Bls12Fp memory y
+    ) internal pure returns (Bls12Fp memory z) {
         unchecked {
             uint8 carry = 0;
             (carry, z.b) = x.b.adc(y.b, carry);
@@ -105,12 +118,17 @@ library BLS12FP {
     /// @param x Bw6Fp.
     /// @param y Bw6Fp.
     /// @return z `(x + y) % p`.
-    function add(Bls12Fp memory x, Bls12Fp memory y) internal pure returns (Bls12Fp memory z) {
+    function add(
+        Bls12Fp memory x,
+        Bls12Fp memory y
+    ) internal pure returns (Bls12Fp memory z) {
         z = add_nomod(x, y);
         z = subtract_modulus_to_norm(z);
     }
 
-    function subtract_modulus_to_norm(Bls12Fp memory self) internal pure returns (Bls12Fp memory z) {
+    function subtract_modulus_to_norm(
+        Bls12Fp memory self
+    ) internal pure returns (Bls12Fp memory z) {
         z = self;
         if (is_geq_modulus(self)) {
             z = sub(self, q());
@@ -121,7 +139,10 @@ library BLS12FP {
     /// @param x Bls12Fp.
     /// @param y Bls12Fp.
     /// @return z `(x - y) % p`.
-    function sub(Bls12Fp memory x, Bls12Fp memory y) internal pure returns (Bls12Fp memory z) {
+    function sub(
+        Bls12Fp memory x,
+        Bls12Fp memory y
+    ) internal pure returns (Bls12Fp memory z) {
         Bls12Fp memory m = x;
         if (gt(y, x)) {
             m = add_nomod(m, q());

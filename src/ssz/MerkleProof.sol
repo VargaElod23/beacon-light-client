@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "../util/Math.sol";
 
@@ -29,13 +29,9 @@ contract MerkleProof {
         uint64 depth,
         uint64 index,
         bytes32 root
-    )
-        internal
-        pure
-        returns (bool)
-    {
+    ) internal pure returns (bool) {
         bytes32 value = leaf;
-        for (uint256 i = 0; i < depth;) {
+        for (uint256 i = 0; i < depth; ) {
             if ((index / (2 ** i)) % 2 == 1) {
                 value = hash_node(branch[i], value);
             } else {
@@ -48,7 +44,9 @@ contract MerkleProof {
         return value == root;
     }
 
-    function merkle_root(bytes32[] memory leaves) internal pure returns (bytes32) {
+    function merkle_root(
+        bytes32[] memory leaves
+    ) internal pure returns (bytes32) {
         uint256 len = leaves.length;
         if (len == 0) return bytes32(0);
         else if (len == 1) return hash(abi.encodePacked(leaves[0]));
@@ -66,7 +64,10 @@ contract MerkleProof {
         return o[1];
     }
 
-    function hash_node(bytes32 left, bytes32 right) internal pure returns (bytes32) {
+    function hash_node(
+        bytes32 left,
+        bytes32 right
+    ) internal pure returns (bytes32) {
         return hash(abi.encodePacked(left, right));
     }
 

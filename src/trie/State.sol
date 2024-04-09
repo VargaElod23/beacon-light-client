@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "../rlp/RLPDecode.sol";
 
@@ -39,14 +39,17 @@ library State {
     /// @notice Convert data input to EVMAccount
     /// @param data RLP data of EVMAccount
     /// @return EVMAccount object
-    function toEVMAccount(bytes memory data) internal pure returns (EVMAccount memory) {
+    function toEVMAccount(
+        bytes memory data
+    ) internal pure returns (EVMAccount memory) {
         RLPDecode.RLPItem[] memory account = RLPDecode.readList(data);
 
-        return EVMAccount({
-            nonce: account[0].readUint256(),
-            balance: account[1].readUint256(),
-            storage_root: account[2].readBytes32(),
-            code_hash: account[3].readBytes32()
-        });
+        return
+            EVMAccount({
+                nonce: account[0].readUint256(),
+                balance: account[1].readUint256(),
+                storage_root: account[2].readBytes32(),
+                code_hash: account[3].readBytes32()
+            });
     }
 }

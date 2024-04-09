@@ -15,23 +15,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./trie/StorageProof.sol";
 import "./BeaconLightClient.sol";
 
 contract EthereumMessageRootOracle is BeaconLightClient {
-    bytes32 public messageRoot = 0x27ae5ba08d7291c96c8cbddcc148bf48a6d68c7974b94356f53754ef6171d757;
+    bytes32 public messageRoot =
+        0x27ae5ba08d7291c96c8cbddcc148bf48a6d68c7974b94356f53754ef6171d757;
 
     address private constant ORMP = 0x00000000001523057a05d6293C1e5171eE33eE0A;
-    bytes32 private constant SLOT = 0x0000000000000000000000000000000000000000000000000000000000000006;
+    bytes32 private constant SLOT =
+        0x0000000000000000000000000000000000000000000000000000000000000006;
 
     struct Proof {
         bytes[] accountProof;
         bytes[] storageProof;
     }
 
-    event FinalizedMessageRootImported(uint256 indexed blockNumber, bytes32 indexed messageRoot);
+    event FinalizedMessageRootImported(
+        uint256 indexed blockNumber,
+        bytes32 indexed messageRoot
+    );
 
     constructor(
         uint64 _slot,
@@ -55,18 +60,27 @@ contract EthereumMessageRootOracle is BeaconLightClient {
             _current_sync_committee_hash,
             _genesis_validators_root
         )
-    { }
+    {}
 
     function import_message_root(bytes calldata encodedProof) external {
         Proof memory proof = abi.decode(encodedProof, (Proof));
-        bytes32 value =
-            toBytes32(StorageProof.verify(merkle_root(), ORMP, proof.accountProof, SLOT, proof.storageProof));
+        bytes32 value = toBytes32(
+            StorageProof.verify(
+                merkle_root(),
+                ORMP,
+                proof.accountProof,
+                SLOT,
+                proof.storageProof
+            )
+        );
         require(value != messageRoot, "same");
         messageRoot = value;
         emit FinalizedMessageRootImported(block_number(), value);
     }
 
-    function toBytes32(bytes memory source) internal pure returns (bytes32 result) {
+    function toBytes32(
+        bytes memory source
+    ) internal pure returns (bytes32 result) {
         require(source.length == 32, "!len");
         /// @solidity memory-safe-assembly
         assembly {

@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Darwinia. If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./State.sol";
 import "../rlp/RLPDecode.sol";
@@ -41,16 +41,20 @@ library StorageProof {
         bytes[] memory account_proof,
         bytes32 storage_key,
         bytes[] memory storage_proof
-    )
-        internal
-        pure
-        returns (bytes memory value)
-    {
+    ) internal pure returns (bytes memory value) {
         bytes memory account_hash = abi.encodePacked(account);
-        bytes memory data = SecureMerkleTrie.get(account_hash, account_proof, root);
+        bytes memory data = SecureMerkleTrie.get(
+            account_hash,
+            account_proof,
+            root
+        );
         State.EVMAccount memory acc = data.toEVMAccount();
         bytes memory storage_key_hash = abi.encodePacked(storage_key);
-        value = SecureMerkleTrie.get(storage_key_hash, storage_proof, acc.storage_root);
+        value = SecureMerkleTrie.get(
+            storage_key_hash,
+            storage_proof,
+            acc.storage_root
+        );
         value = value.toRLPItem().readBytes();
     }
 }

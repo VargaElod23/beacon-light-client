@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./Fp2.sol";
 import "../util/Bytes.sol";
@@ -38,7 +38,10 @@ library BLS12G2Affine {
     /// @param a Bls12G2.
     /// @param b Bls12G2.
     /// @return Result of equal check.
-    function eq(Bls12G2 memory a, Bls12G2 memory b) internal pure returns (bool) {
+    function eq(
+        Bls12G2 memory a,
+        Bls12G2 memory b
+    ) internal pure returns (bool) {
         return a.x.eq(b.x) && a.y.eq(b.y);
     }
 
@@ -55,7 +58,9 @@ library BLS12G2Affine {
     /// See <https://tools.ietf.org/html/draft-irtf-cfrg-hash-to-curve-09#section-3>
     /// @param message An arbitrary-length byte string..
     /// @return A point in Bls12G2.
-    function hash_to_curve(bytes memory message) internal view returns (Bls12G2 memory) {
+    function hash_to_curve(
+        bytes memory message
+    ) internal view returns (Bls12G2 memory) {
         Bls12Fp2[2] memory u = message.hash_to_field();
         Bls12G2 memory q0 = map_to_curve(u[0]);
         Bls12G2 memory q1 = map_to_curve(u[1]);
@@ -66,7 +71,10 @@ library BLS12G2Affine {
     /// @param p Bls12G2.
     /// @param q Bls12G2.
     /// @return `x + y`.
-    function add(Bls12G2 memory p, Bls12G2 memory q) internal view returns (Bls12G2 memory) {
+    function add(
+        Bls12G2 memory p,
+        Bls12G2 memory q
+    ) internal view returns (Bls12G2 memory) {
         uint256[16] memory input;
         input[0] = p.x.c0.a;
         input[1] = p.x.c0.b;
@@ -100,7 +108,9 @@ library BLS12G2Affine {
     /// @dev Map an arbitary field element to a corresponding curve point.
     /// @param fp2 Bls12Fp2.
     /// @return A point in G2.
-    function map_to_curve(Bls12Fp2 memory fp2) internal view returns (Bls12G2 memory) {
+    function map_to_curve(
+        Bls12Fp2 memory fp2
+    ) internal view returns (Bls12G2 memory) {
         uint256[4] memory input;
         input[0] = fp2.c0.a;
         input[1] = fp2.c0.b;
@@ -109,7 +119,9 @@ library BLS12G2Affine {
         uint256[8] memory output;
 
         assembly ("memory-safe") {
-            if iszero(staticcall(gas(), MAP_FP2_TO_G2, input, 128, output, 256)) {
+            if iszero(
+                staticcall(gas(), MAP_FP2_TO_G2, input, 128, output, 256)
+            ) {
                 let p := mload(0x40)
                 returndatacopy(p, 0, returndatasize())
                 revert(p, returndatasize())
@@ -123,13 +135,17 @@ library BLS12G2Affine {
     /// @param x uint256[4].
     /// @return Bls12G2.
     function from(uint256[8] memory x) internal pure returns (Bls12G2 memory) {
-        return Bls12G2(
-            Bls12Fp2(Bls12Fp(x[0], x[1]), Bls12Fp(x[2], x[3])), Bls12Fp2(Bls12Fp(x[4], x[5]), Bls12Fp(x[6], x[7]))
-        );
+        return
+            Bls12G2(
+                Bls12Fp2(Bls12Fp(x[0], x[1]), Bls12Fp(x[2], x[3])),
+                Bls12Fp2(Bls12Fp(x[4], x[5]), Bls12Fp(x[6], x[7]))
+            );
     }
 
     // Take a 192 byte array and convert to G2 point (x, y)
-    function deserialize(bytes memory g2) internal pure returns (Bls12G2 memory) {
+    function deserialize(
+        bytes memory g2
+    ) internal pure returns (Bls12G2 memory) {
         require(g2.length == 192, "!g2");
         bytes1 byt = g2[0];
         bool c_flag = (byt >> 7) & 0x01 == 0x01;
@@ -142,13 +158,31 @@ library BLS12G2Affine {
         require(!b_flag, "infinity");
 
         // Convert from array to FP2
-        Bls12Fp memory x_imaginary = Bls12Fp(g2.slice_to_uint(0, 16), g2.slice_to_uint(16, 48));
-        Bls12Fp memory x_real = Bls12Fp(g2.slice_to_uint(48, 64), g2.slice_to_uint(64, 96));
-        Bls12Fp memory y_imaginary = Bls12Fp(g2.slice_to_uint(96, 112), g2.slice_to_uint(112, 144));
-        Bls12Fp memory y_real = Bls12Fp(g2.slice_to_uint(144, 160), g2.slice_to_uint(160, 192));
+        Bls12Fp memory x_imaginary = Bls12Fp(
+            g2.slice_to_uint(0, 16),
+            g2.slice_to_uint(16, 48)
+        );
+        Bls12Fp memory x_real = Bls12Fp(
+            g2.slice_to_uint(48, 64),
+            g2.slice_to_uint(64, 96)
+        );
+        Bls12Fp memory y_imaginary = Bls12Fp(
+            g2.slice_to_uint(96, 112),
+            g2.slice_to_uint(112, 144)
+        );
+        Bls12Fp memory y_real = Bls12Fp(
+            g2.slice_to_uint(144, 160),
+            g2.slice_to_uint(160, 192)
+        );
 
         // Require elements less than field modulus
-        require(x_imaginary.is_valid() && x_real.is_valid() && y_imaginary.is_valid() && y_real.is_valid(), "!pnt");
+        require(
+            x_imaginary.is_valid() &&
+                x_real.is_valid() &&
+                y_imaginary.is_valid() &&
+                y_real.is_valid(),
+            "!pnt"
+        );
 
         Bls12Fp2 memory x = Bls12Fp2(x_real, x_imaginary);
         Bls12Fp2 memory y = Bls12Fp2(y_real, y_imaginary);
@@ -159,7 +193,9 @@ library BLS12G2Affine {
     }
 
     // Take a G2 point (x, y) and compress it to a 96 byte array as the x-coordinate.
-    function serialize(Bls12G2 memory g2) internal pure returns (bytes memory r) {
+    function serialize(
+        Bls12G2 memory g2
+    ) internal pure returns (bytes memory r) {
         if (is_infinity(g2)) {
             r = new bytes(96);
             r[0] = bytes1(0xc0);
@@ -174,7 +210,9 @@ library BLS12G2Affine {
             Bls12Fp memory y_re = g2.y.c0;
             Bls12Fp memory y_im = g2.y.c1;
 
-            bool y_flag = y_im.is_zero() ? y_re.add_nomod(y_re).gt(q) : y_im.add_nomod(y_im).gt(q);
+            bool y_flag = y_im.is_zero()
+                ? y_re.add_nomod(y_re).gt(q)
+                : y_im.add_nomod(y_im).gt(q);
             if (y_flag) {
                 r[0] = r[0] | Y_FLAG;
             }

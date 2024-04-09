@@ -2,9 +2,9 @@
 //
 // Inspired: https://github.com/ethereum/solidity-examples
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
-import { Memory } from "./Memory.sol";
+import {Memory} from "./Memory.sol";
 
 library Bytes {
     uint256 private constant BYTES_HEADER_SIZE = 32;
@@ -14,7 +14,10 @@ library Bytes {
     // Equality means that:
     //  - 'self.length == other.length'
     //  - For 'n' in '[0, self.length)', 'self[n] == other[n]'
-    function equals(bytes memory self, bytes memory other) internal pure returns (bool equal) {
+    function equals(
+        bytes memory self,
+        bytes memory other
+    ) internal pure returns (bool equal) {
         if (self.length != other.length) {
             return false;
         }
@@ -31,7 +34,10 @@ library Bytes {
     // Returns the new copy.
     // Requires that 'startIndex <= self.length'
     // The length of the substring is: 'self.length - startIndex'
-    function substr(bytes memory self, uint256 startIndex) internal pure returns (bytes memory) {
+    function substr(
+        bytes memory self,
+        uint256 startIndex
+    ) internal pure returns (bytes memory) {
         require(startIndex <= self.length);
         uint256 len = self.length - startIndex;
         uint256 addr = Memory.dataPtr(self);
@@ -43,7 +49,11 @@ library Bytes {
     // Requires that:
     //  - 'startIndex + len <= self.length'
     // The length of the substring is: 'len'
-    function substr(bytes memory self, uint256 startIndex, uint256 len) internal pure returns (bytes memory) {
+    function substr(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
         require(startIndex + len <= self.length);
         if (len == 0) {
             return new bytes(0);
@@ -56,7 +66,10 @@ library Bytes {
     // Returns the concatenated arrays:
     //  [self[0], self[1], ... , self[self.length - 1], other[0], other[1], ... , other[other.length - 1]]
     // The length of the new array is 'self.length + other.length'
-    function concat(bytes memory self, bytes memory other) internal pure returns (bytes memory) {
+    function concat(
+        bytes memory self,
+        bytes memory other
+    ) internal pure returns (bytes memory) {
         bytes memory ret = new bytes(self.length + other.length);
         uint256 src;
         uint256 srcLen;
@@ -65,14 +78,18 @@ library Bytes {
         uint256 src2Len;
         (src2, src2Len) = Memory.fromBytes(other);
         uint256 dest;
-        (dest,) = Memory.fromBytes(ret);
+        (dest, ) = Memory.fromBytes(ret);
         uint256 dest2 = dest + srcLen;
         Memory.copy(src, dest, srcLen);
         Memory.copy(src2, dest2, src2Len);
         return ret;
     }
 
-    function slice_to_uint(bytes memory self, uint256 start, uint256 end) internal pure returns (uint256 r) {
+    function slice_to_uint(
+        bytes memory self,
+        uint256 start,
+        uint256 end
+    ) internal pure returns (uint256 r) {
         uint256 len = end - start;
         require(0 <= len && len <= 32, "!slice");
 
@@ -84,12 +101,19 @@ library Bytes {
     }
 
     /// alias of substr
-    function slice(bytes memory self, uint256 startIndex, uint256 len) internal pure returns (bytes memory) {
+    function slice(
+        bytes memory self,
+        uint256 startIndex,
+        uint256 len
+    ) internal pure returns (bytes memory) {
         return substr(self, startIndex, len);
     }
 
     /// alias of substr
-    function slice(bytes memory self, uint256 startIndex) internal pure returns (bytes memory) {
+    function slice(
+        bytes memory self,
+        uint256 startIndex
+    ) internal pure returns (bytes memory) {
         return substr(self, startIndex);
     }
 }

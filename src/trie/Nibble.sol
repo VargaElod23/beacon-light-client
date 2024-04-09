@@ -3,14 +3,16 @@
 // Inspired:
 // https://github.com/ethereum-optimism/optimism/blob/develop/packages/contracts-bedrock/src/libraries/Bytes.sol
 
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 library Nibble {
     /// @notice Converts a byte array into a nibble array by splitting each byte into two nibbles.
     ///         Resulting nibble array will be exactly twice as long as the input byte array.
     /// @param _bytes Input byte array to convert.
     /// @return Resulting nibble array.
-    function toNibbles(bytes memory _bytes) internal pure returns (bytes memory) {
+    function toNibbles(
+        bytes memory _bytes
+    ) internal pure returns (bytes memory) {
         bytes memory _nibbles;
         assembly {
             // Grab a free memory offset for the new array
@@ -26,7 +28,10 @@ library Nibble {
             // Update the free memory pointer to allocate memory for the new array.
             // To do this, we add the length of the new array + 32 bytes for the array length
             // rounded up to the nearest 32 byte boundary to the current free memory pointer.
-            mstore(0x40, add(_nibbles, and(not(0x1F), add(nibblesLength, 0x3F))))
+            mstore(
+                0x40,
+                add(_nibbles, and(not(0x1F), add(nibblesLength, 0x3F)))
+            )
 
             // Store the length of the new array in memory
             mstore(_nibbles, nibblesLength)
@@ -38,7 +43,11 @@ library Nibble {
             let nibblesStart := add(_nibbles, 0x20)
 
             // Loop through each byte in the input array
-            for { let i := 0x00 } lt(i, bytesLength) { i := add(i, 0x01) } {
+            for {
+                let i := 0x00
+            } lt(i, bytesLength) {
+                i := add(i, 0x01)
+            } {
                 // Get the starting offset of the next 2 bytes in the nibbles array
                 let offset := add(nibblesStart, shl(0x01, i))
                 // Load the byte at the current index within the `_bytes` array

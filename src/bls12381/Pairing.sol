@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.17;
+pragma solidity ^0.8.17;
 
 import "./G1.sol";
 import "./G2.sol";
@@ -8,13 +8,17 @@ import "./G2.sol";
 library BLS12Pairing {
     /// @dev BLS12_377_PAIRING precompile address.
     uint256 private constant BLS12_PAIRING = 0x12;
+
     // uint256 private constant BLS12_PAIRING = 0x10;
 
     /// @dev Computes a "product" of pairings.
     /// @param a List of Bls12G1.
     /// @param b List of Bls12G2.
     /// @return True if pairing output is 1.
-    function pairing(Bls12G1[] memory a, Bls12G2[] memory b) internal view returns (bool) {
+    function pairing(
+        Bls12G1[] memory a,
+        Bls12G2[] memory b
+    ) internal view returns (bool) {
         require(a.length == b.length, "!len");
         uint256 K = a.length;
         uint256 N = 12 * K;
@@ -38,7 +42,16 @@ library BLS12Pairing {
         uint256[1] memory output;
 
         assembly ("memory-safe") {
-            if iszero(staticcall(gas(), BLS12_PAIRING, add(input, 32), mul(N, 32), output, 32)) {
+            if iszero(
+                staticcall(
+                    gas(),
+                    BLS12_PAIRING,
+                    add(input, 32),
+                    mul(N, 32),
+                    output,
+                    32
+                )
+            ) {
                 let pt := mload(0x40)
                 returndatacopy(pt, 0, returndatasize())
                 revert(pt, returndatasize())
